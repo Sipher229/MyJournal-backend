@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({extended: true}))
 app.use(express.json())
 
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5174',
     credentials: true,
     optionSuccessStatus: '200',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -228,7 +228,7 @@ app.get("/getcontent", (req, res) => {
                 message: "retrieved data successfully",
                 isLoggedIn: true,
                 notes: result.rows,
-                username: req.user.username,
+                username: req.user.email,
                 userId: req.user.id,
             })
         })
