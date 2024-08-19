@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({extended: true}))
 app.use(express.json())
 
 app.use(cors({
-    origin: 'http://localhost:5174',
+    origin: 'http://localhost:5173',
     credentials: true,
     optionSuccessStatus: '200',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
@@ -53,7 +53,7 @@ app.use(passport.session())
 app.post("/register", (req, res) => {
     console.log("register route!")
     const {username, password} = req.body
-    const qry = "INSERT INTO Users(email, password) VALUES ($1, $2)"
+    const qry = "INSERT INTO Users(username, password) VALUES ($1, $2)"
     try{
         bcrypt.hash(password, saltRounds, (err, hash) => {
             
@@ -112,7 +112,7 @@ app.post("/login", passport.authenticate("local", {
 // }
 passport.use (new Strategy( async function verify(username, password, cb){
 
-    const qry = "SELECT * FROM Users WHERE email = $1"
+    const qry = "SELECT * FROM Users WHERE username = $1"
     
     try{
         const response = await db.query(qry, [username])
@@ -202,7 +202,7 @@ app.post("/add", (req, res) =>{
 //----------------------------------------------- get content ----------------------------------
 app.get("/getcontent", (req, res) => {
     console.log("getcontent route!")
-    // console.log(req.user)
+    console.log(req.user)
     // console.log(req.isAuthenticated())
     if (!req.isAuthenticated()){
         return res.json({
@@ -211,24 +211,25 @@ app.get("/getcontent", (req, res) => {
             isLoggedIn: false
         })
     }
-    const {id} = req.user
-    const qry = "SELECT * FROM Notes WHERE userId = $1"
+    const {username} = req.user
+    const qry = "SELECT * FROM users INNER JOIN notes ON users.id = notes.userid WHERE username = $1"
     try {
-        db.query(qry, [id], (err, result) => {
+        db.query(qry, [username], (err, result) => {
             if (err) {
+                console.log(err.message)
                 return res.json({
                     success: false,
                     message: err.message,
                     isLoggedIn: false
                 })
             }
-
+            console.log(result.rows)
             return res.json({
                 success: true,
                 message: "retrieved data successfully",
                 isLoggedIn: true,
                 notes: result.rows,
-                username: req.user.email,
+                username: req.user.username,
                 userId: req.user.id,
             })
         })
@@ -246,7 +247,7 @@ app.get("/getcontent", (req, res) => {
 app.get("/notauthorised", (req, res) => {
     return res.json({
         success: false,
-        message: "User not authenticated",
+        message: "User not authorized",
         isLoggedIn: false,
     })
 })
