@@ -50,7 +50,7 @@ app.use(passport.session())
 // app.options('*', cors())
 // -----------------------------------register route---------------------------------
 
-app.post("/register", (req, res) => {
+app.post("/api/register", (req, res) => {
     console.log("register route!")
     const {username, password} = req.body
     const qry = "INSERT INTO Users(username, password) VALUES ($1, $2)"
@@ -96,20 +96,12 @@ app.post("/register", (req, res) => {
 
 // -------------------------------- login route ------------------------------------
 
-app.post("/login", passport.authenticate("local", {
-    successRedirect: "/getcontent",
-    failureRedirect: "/notauthorised"
+app.post("/api/login", passport.authenticate("local", {
+    successRedirect: "/api/getcontent",
+    failureRedirect: "/api/notauthorised"
 }))
 
 
-
-// (req, res) =>{
-//     if(req.user){
-//         res.setHeader('Access-Control-Allow-Credentials', 'true')
-//         return res.redirect("/getcontent")
-//     }
-//     return res.redirect("/notauthorised")
-// }
 passport.use (new Strategy( async function verify(username, password, cb){
 
     const qry = "SELECT * FROM Users WHERE username = $1"
@@ -124,30 +116,15 @@ passport.use (new Strategy( async function verify(username, password, cb){
                 }
                 if(result){
                     cb(null, response.rows[0])
-                 
                 }else{
-                    // res.json({
-                    //     status: 400,
-                    //     success: false,
-                    //     message: "wrong password"
-                    // })
                     cb(null, false)
                 }
             })
         }else {
-            // res.json({
-            //     status: 400,
-            //     success: false,
-            //     message: "wrong email"
-            // })
+
             cb(null, false)
         }
     } catch(e){
-        // res.json({
-        //     status: 500,
-        //     success: false,
-        //     message: e.message
-        // })
         console.log(e.stack)
     }
 
@@ -163,7 +140,7 @@ passport.deserializeUser((user, cb) => {
 
 // ------------------------------- add content ----------------------------------------------
 
-app.post("/add", (req, res) =>{
+app.post("/api/add", (req, res) =>{
     console.log("add route!")
     if (!req.isAuthenticated()){
         return res.json({
@@ -185,7 +162,7 @@ app.post("/add", (req, res) =>{
                     isLoggedIn: false
                 })
             }
-            return res.redirect("/getcontent")
+            return res.redirect("/api/getcontent");
         })
 
     }catch(e){
@@ -200,9 +177,9 @@ app.post("/add", (req, res) =>{
 })
 
 //----------------------------------------------- get content ----------------------------------
-app.get("/getcontent", (req, res) => {
+app.get("/api/getcontent", (req, res) => {
     console.log("getcontent route!")
-    console.log(req.user)
+    // console.log(req.user)
     // console.log(req.isAuthenticated())
     if (!req.isAuthenticated()){
         return res.json({
@@ -244,7 +221,7 @@ app.get("/getcontent", (req, res) => {
 })
 
 // ----------------------------------------------------- not authorized -----------------------------------
-app.get("/notauthorised", (req, res) => {
+app.get("/api/notauthorised", (req, res) => {
     return res.json({
         success: false,
         message: "User not authorized",
@@ -254,7 +231,7 @@ app.get("/notauthorised", (req, res) => {
 
 // ------------------------------------------------------- edit content ----------------------------------------
 
-app.patch("/edit", (req, res) => {
+app.patch("/api/edit", (req, res) => {
     console.log("edit route!")
     if (!req.isAuthenticated()){
         return res.json({
@@ -296,7 +273,7 @@ app.patch("/edit", (req, res) => {
 
 // -------------------------------------------------- delete content ----------------------------------
 
-app.delete("/delete/:id", (req, res) => {
+app.delete("/api/delete/:id", (req, res) => {
     console.log("delete route!")
     if (!req.isAuthenticated()){
         return res.json({
@@ -306,6 +283,13 @@ app.delete("/delete/:id", (req, res) => {
         })
     }
     const notedId = req.params.id 
+    if (!notedId) {
+        res.status(400).json({
+            success: false,
+            message: "provide the id of the item to delete",
+            isLoggedIn: true
+        })
+    }
     const qry = "DELETE FROM Notes WHERE id = $1"
 
     try {
@@ -334,7 +318,7 @@ app.delete("/delete/:id", (req, res) => {
 })
 
 //--------------------------------------------------- log out -------------------------------
-app.delete("/logout", (req, res) => {
+app.delete("/api/logout", (req, res) => {
     if(req.isAuthenticated()){
         return req.logOut((err)=>{
             if (err) {
@@ -361,45 +345,3 @@ app.delete("/logout", (req, res) => {
 app.listen(port, () => {
     console.log(`listening on port ${port}`)
 })
-
-
-    // console.log("login route!")
-    // const qry = "SELECT email, password FROM Users WHERE email = $1"
-    
-    // try{
-    //     const response = await db.query(qry, [req.body.username])
-    //     if(response.rows.length !== 0){
-    //         const {email, password} = response.rows[0]
-    //         bcrypt.compare(req.body.password, password, (err, result)=>{
-    //             if(err){
-    //                 throw new Error("error while comparing: " + err.message)
-    //             }
-    //             if(result){
-    //                 res.json({
-    //                     status: 200,
-    //                     success: true,
-    //                     message: "Successful"
-    //                 })
-    //             }else{
-    //                 res.json({
-    //                     status: 400,
-    //                     success: false,
-    //                     message: "wrong password"
-    //                 })
-    //             }
-    //         })
-    //     }else {
-    //         res.json({
-    //             status: 400,
-    //             success: false,
-    //             message: "wrong email"
-    //         })
-    //     }
-    // } catch(e){
-    //     res.json({
-    //         status: 500,
-    //         success: false,
-    //         message: e.message
-    //     })
-    //     console.log(e.stack)
-    // }
